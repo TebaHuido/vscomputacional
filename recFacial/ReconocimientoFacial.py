@@ -2,7 +2,7 @@ import cv2
 import requests
 import threading
 import time
-
+import sys
 dataPath = './Data'
 persons = ['Copito', 'Nacho', 'Nico V', 'Roby', 'Seba H']
 print('imagePaths=', persons)

@@ -1,66 +1,56 @@
 import cv2
-import face_recognition
-import numpy as np
 import pickle
+import numpy as np
 
-# Cargar el modelo SVM
-model_path = './Modelos/modeloSVM.pkl'
-with open(model_path, 'rb') as model_file:
-    model = pickle.load(model_file)
-print("Modelo SVM cargado.")
+# Cargar el modelo SVM entrenado
+with open('.\Modelos\modeloSVM.pkl', 'rb') as f:
+    svm_model = pickle.load(f)
 
-# Definir la ruta de los datos y las personas
-persons = ['Copito', 'Nacho', 'Seba H', 'Nico V', 'Roby']
-print('Personas:', persons)
+# Inicialización del clasificador Haar Cascade para la detección de rostros
+face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 
-# Inicializar la cámara
-video_capture = cv2.VideoCapture('http://192.168.1.86:4747/video')
+# Inicialización de la cámara
+cap = cv2.VideoCapture('http://192.168.1.86:4747/video')
 
 while True:
-    # Capturar un solo fotograma de video
-    ret, frame = video_capture.read()
+    ret, frame = cap.read()
     
-    if not ret:
-        print("Error al capturar el fotograma de video.")
-        break
+    # Convertir a escala de grises para la detección de rostros
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     
-    # Convertir la imagen de BGR (OpenCV) a RGB (face_recognition)
-    rgb_frame = frame[:, :, ::-1]
-
-    # Encontrar todas las caras y codificaciones faciales en el fotograma de video
-    face_locations = face_recognition.face_locations(rgb_frame)
+    # Detectar rostros en la imagen
+    faces = face_cascade.detectMultiScale(gray, 1.3, 5)
     
-    # Verificar que se encontraron ubicaciones de caras válidas
-    if len(face_locations) > 0:
-        face_encodings = face_recognition.face_encodings(rgb_frame, face_locations)
-
-        # Loop a través de cada cara en este fotograma de video
-        for (top, right, bottom, left), face_encoding in zip(face_locations, face_encodings):
-            # Predecir la identidad de la persona utilizando SVM
-            face_encoding = face_encoding.reshape(1, -1)
-            result = model.predict(face_encoding)
-            prob = model.decision_function(face_encoding).max()
-
-            name = "Desconocido"
-            
-            if prob > 0.5:
-                name = persons[result[0]]
-            
-            # Dibujar un rectángulo alrededor de la cara
-            cv2.rectangle(frame, (left, top), (right, bottom), (0, 0, 255), 2)
-
-            # Escribir una etiqueta con el nombre debajo de la cara
-            cv2.rectangle(frame, (left, bottom - 35), (right, bottom), (0, 0, 255), cv2.FILLED)
-            font = cv2.FONT_HERSHEY_DUPLEX
-            cv2.putText(frame, name, (left + 6, bottom - 6), font, 1.0, (255, 255, 255), 1)
-
-    # Mostrar la imagen resultante
-    cv2.imshow('Video', frame)
-
-    # Presionar 'q' en el teclado para salir
+    # Procesar cada rostro detectado
+    for (x, y, w, h) in faces:
+        # Recortar la región de interés (ROI)
+        roi = gray[y:y+h, x:x+w]
+        
+        # Redimensionar la ROI al tamaño esperado por el modelo SVM
+        roi_resized = cv2.resize(roi, (128, 128))  # Redimensionar a 128x128
+        
+        # Convertir la imagen a un vector de características
+        features = roi_resized.flatten()[:128]  # Aplanar la imagen y tomar solo los primeros 128 elementos
+        
+        # Verificar las dimensiones de las características
+        print(features.shape)  # Asegurarse de que tenga (128,) como dimensión
+        
+        # Realizar la predicción con el modelo SVM
+        prediction = svm_model.predict([features])[0]
+        
+        # Dibujar un rectángulo alrededor del rostro detectado
+        cv2.rectangle(frame, (x, y), (x+w, y+h), (255, 0, 0), 2)
+        
+        # Mostrar la etiqueta predicha
+        cv2.putText(frame, str(prediction), (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255, 0, 0), 2)
+    
+    # Mostrar el frame con los rostros detectados
+    cv2.imshow('Frame', frame)
+    
+    # Salir con la tecla 'q'
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
-# Liberar el controlador de la cámara
-video_capture.release()
+# Liberar la cámara y cerrar todas las ventanas
+cap.release()
 cv2.destroyAllWindows()
