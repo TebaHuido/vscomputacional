@@ -1,0 +1,15 @@
+services:
+  visionDjango:
+    build:
+      context: ./visionDjango
+    ports:
+      - "8000:8000"
+    image: proyectovision-visiondjango
+
+  recFacial:
+    build:
+      context: ./recFacial
+    image: proyectovision-recfacial
+    network_mode: "host"
+    volumes:
+      - ./recFacial/modeloLBPHFace.xml:/app/modeloLBPHFace.xml

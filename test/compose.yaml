@@ -1,0 +1,9 @@
+services:
+  visionDjango:
+    image: minero420/visiondjango:latest  # Cambia esto por tu imagen en Docker Hub
+    ports:
+      - "8000:8000"
+
+  recFacial:
+    image: minero420/recfacial:latest  # Cambia esto por tu imagen en Docker Hub
+    network_mode: "host"

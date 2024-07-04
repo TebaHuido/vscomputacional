@@ -1,0 +1,6 @@
+/visiondjango/venv/
+/recFacial/venv/
+/recFacial/venvsvm/
+/recFacial/Modelos/*
+/recFacial/Modelos/modeloLBPHFace.xml
+/recFacial/modelo*/
