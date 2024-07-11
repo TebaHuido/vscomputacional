@@ -22,7 +22,7 @@ class Clase(models.Model):
 
 class Asistencia(models.Model):
     alumno = models.ForeignKey(Alumno, on_delete=models.CASCADE)
-    clase = models.ForeignKey(Clase, on_delete=models.CASCADE)
+    clase = models.ForeignKey(Clase, on_delete=models.CASCADE, null=True, blank=True)
     asistio = models.BooleanField(default=False)
 
     class Meta:

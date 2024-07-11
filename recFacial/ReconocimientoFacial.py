@@ -3,12 +3,14 @@ import requests
 import threading
 import time
 import sys
+
 dataPath = './Data'
 persons = ['Copito', 'Nacho', 'Nico V', 'Roby', 'Seba H']
 print('imagePaths=', persons)
 
 # Inicializando la captura de video
-cap = cv2.VideoCapture('http://192.168.1.86:4747/video')
+#cap = cv2.VideoCapture('http://192.168.1.86:4747/video')
+cap = cv2.VideoCapture(1)
 if not cap.isOpened():
     print("Error al abrir la cámara.")
     sys.exit(1)
@@ -16,12 +18,12 @@ if not cap.isOpened():
 recognizer = cv2.face.LBPHFaceRecognizer_create()
 
 # Leyendo el modelo
-recognizer.read('.\Modelos\modeloLBPHFace.xml')
+recognizer.read('./Modelos/modeloLBPHFace.xml')
 print("Modelo cargado.")
 
 # Inicializando el clasificador de rostros
 faceClassif = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
-url = 'http://localhost:8000/test'
+url = 'http://localhost:8000/asistencia/'
 client = requests.session()
 
 # Obteniendo CSRF token
@@ -64,6 +66,8 @@ def procesar_y_enviar_datos(frame, persons, recognizer, faceClassif, url, csrfto
                 
                 if csrftoken:
                     try:
+                        print(result[0])
+                        print(result[1])
                         myobj = dict(person=person_name, csrfmiddlewaretoken=csrftoken)
                         x = client.post(url, data=myobj, headers=dict(Referer=url))
                         if x.status_code == 200:
